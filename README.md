@@ -4,6 +4,14 @@ An interactive web-based AI assistant application that combines Google's Gemini 
 
 [![AI Assistant with Voice Interface](https://raw.githubusercontent.com/AdityaAjithKumar/Genesis_Personalised_AI/main/Screenshot%202025-03-22%20100238.png)](https://genesis-personalised-ai.vercel.app/)
 
+## 🎬 Demo Video
+
+Check out the demo video to see the application in action:
+
+[![Demo Video](https://raw.githubusercontent.com/AdityaAjithKumar/Genesis_Personalised_AI/main/Screenshot%202025-03-22%20100238.png)](https://www.dropbox.com/scl/fi/k6q1l8vxiicwwyisx2eih/Screen-Recording-2025-03-22-092147.mp4?rlkey=01y1b5uaaruexole1vh7gez8o&st=1qqg680a&dl=0)
+
+[Download Demo Video](https://www.dropbox.com/scl/fi/k6q1l8vxiicwwyisx2eih/Screen-Recording-2025-03-22-092147.mp4?rlkey=01y1b5uaaruexole1vh7gez8o&st=1qqg680a&dl=1)
+
 ## ✨ Features
 
 - 💬 **Text-based chat** with Gemini AI's powerful language model
