@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Character Voice Interaction</title>
+    <style>
+        :root {
+            --primary-color: #6366f1;
+            --primary-light: #818cf8;
+            --primary-dark: #4f46e5;
+            --secondary-color: #f472b6;
+            --dark-color: #1e293b;
+            --light-color: #f8fafc;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--light-color);
+            color: var(--dark-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .app-container {
+            max-width: 1200px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .app-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            text-align: center;
+            color: var(--primary-dark);
+            margin-bottom: 1rem;
+        }
+
+        .app-subtitle {
+            font-size: 1.2rem;
+            text-align: center;
+            color: var(--dark-color);
+            opacity: 0.8;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .character-selection {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 1.5rem;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .character-card {
+            background-color: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: var(--transition);
+            border: 3px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .character-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .character-card.active {
+            border-color: var(--primary-color);
+            background-color: rgba(99, 102, 241, 0.05);
+        }
+
+        .character-avatar {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            margin: 0 auto 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-dark) 100%);
+            color: white;
+            position: relative;
+            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
+        }
+
+        .character-name {
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: var(--dark-color);
+        }
+
+        .character-description {
+            font-size: 0.9rem;
+            color: var(--dark-color);
+            opacity: 0.7;
+            line-height: 1.5;
+        }
+
+        .interaction-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 600px;
+            padding: 2rem;
+            border-radius: 24px;
+            background-color: white;
+            box-shadow: var(--shadow);
+            margin-top: 1rem;
+            min-height: 300px;
+            position: relative;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: var(--transition);
+            pointer-events: none;
+        }
+
+        .interaction-area.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+
+        .selected-character {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .selected-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-dark) 100%);
+            color: white;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
+        }
+
+        .selected-name {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--dark-color);
+        }
+
+        .mic-button {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
+            position: relative;
+            z-index: 2;
+        }
+
+        .mic-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 15px rgba(79, 70, 229, 0.4);
+        }
+
+        .mic-button.recording {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, #e11d48 100%);
+            animation: pulse 1.5s infinite;
+            box-shadow: 0 0 0 0 rgba(244, 114, 182, 0.7);
+        }
+
+        .status-text {
+            margin-top: 1.5rem;
+            font-weight: 600;
+            color: var(--dark-color);
+            opacity: 0.7;
+        }
+
+        .visualizer-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 120px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding: 0 2rem;
+            overflow: hidden;
+            border-radius: 0 0 24px 24px;
+            z-index: 1;
+        }
+
+        .visualizer-bars {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 6px;
+            height: 100%;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .visualizer-bar {
+            width: 6px;
+            border-radius: 6px;
+            background: linear-gradient(to top, var(--primary-light), var(--primary-dark));
+            height: 5px;
+            transition: height 0.1s ease;
+        }
+
+        /* Animation for mic button when recording */
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(244, 114, 182, 0.7);
+            }
+            70% {
+                transform: scale(1.05);
+                box-shadow: 0 0 0 15px rgba(244, 114, 182, 0);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(244, 114, 182, 0);
+            }
+        }
+
+        /* Background effects */
+        .background-shape {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.15;
+            z-index: -1;
+        }
+
+        .shape1 {
+            width: 400px;
+            height: 400px;
+            background-color: var(--primary-color);
+            top: -150px;
+            left: -100px;
+        }
+
+        .shape2 {
+            width: 300px;
+            height: 300px;
+            background-color: var(--secondary-color);
+            bottom: -100px;
+            right: -50px;
+        }
+
+        /* Status messages */
+        .status-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            background-color: var(--dark-color);
+            color: white;
+            font-weight: 500;
+            box-shadow: var(--shadow);
+            transform: translateX(120%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .status-message.active {
+            transform: translateX(0);
+        }
+
+        .status-message.success {
+            background-color: var(--success-color);
+        }
+
+        .status-message.error {
+            background-color: var(--error-color);
+        }
+
+        /* Responsive styles */
+        @media (max-width: 768px) {
+            .app-title {
+                font-size: 2rem;
+            }
+
+            .app-subtitle {
+                font-size: 1rem;
+            }
+
+            .character-selection {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+
+            .character-avatar {
+                width: 80px;
+                height: 80px;
+                font-size: 2.5rem;
+            }
+
+            .interaction-area {
+                padding: 1.5rem;
+                min-height: 250px;
+            }
+
+            .visualizer-container {
+                height: 80px;
+            }
+
+            .visualizer-bars {
+                gap: 4px;
+            }
+
+            .visualizer-bar {
+                width: 4px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 1rem;
+            }
+
+            .character-selection {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+
+            .character-avatar {
+                width: 60px;
+                height: 60px;
+                font-size: 2rem;
+            }
+
+            .character-name {
+                font-size: 1rem;
+            }
+
+            .character-description {
+                font-size: 0.8rem;
+            }
+
+            .mic-button {
+                width: 65px;
+                height: 65px;
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background shapes -->
+    <div class="background-shape shape1"></div>
+    <div class="background-shape shape2"></div>
+
+    <div class="app-container">
+        <h1 class="app-title">Character Voice Interaction</h1>
+        <p class="app-subtitle">Select a character below and use the microphone to speak with them</p>
+
+        <div class="character-selection" id="character-selection">
+            <!-- Characters will be generated by JavaScript -->
+        </div>
+
+        <div class="interaction-area" id="interaction-area">
+            <div class="selected-character" id="selected-character">
+                <!-- Selected character info will be inserted here -->
+            </div>
+
+            <button class="mic-button" id="mic-button">
+                <i>🎙️</i>
+            </button>
+
+            <p class="status-text" id="status-text">Click the microphone to start speaking</p>
+
+            <div class="visualizer-container">
+                <div class="visualizer-bars" id="visualizer-bars">
+                    <!-- Visualizer bars will be generated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="status-message" id="status-message"></div>
+
+    <script>
+        // Character data
+        const characters = [
+            {
+                id: 'banker',
+                emoji: '💼',
+                name: 'Grumpy Banker',
+                description: 'A cynical financial expert who reluctantly shares advice'
+            },
+            {
+                id: 'chef',
+                emoji: '👨‍🍳',
+                name: 'Friendly Chef',
+                description: 'A passionate culinary expert who loves to share recipes'
+            },
+            {
+                id: 'robot',
+                emoji: '🤖',
+                name: 'Sci-Fi Robot',
+                description: 'A robot from the future fascinated by human culture'
+            },
+            {
+                id: 'actor',
+                emoji: '🎭',
+                name: 'Dramatic Actor',
+                description: 'A humble but passionate actor who responds with theatrical flair'
+            },
+            {
+                id: 'detective',
+                emoji: '🕵️',
+                name: 'Mystery Detective',
+                description: 'A sharp-witted detective who speaks in riddles and clues'
+            },
+
+        ];
+
+        // DOM elements
+        const characterSelectionEl = document.getElementById('character-selection');
+        const interactionAreaEl = document.getElementById('interaction-area');
+        const selectedCharacterEl = document.getElementById('selected-character');
+        const micButtonEl = document.getElementById('mic-button');
+        const statusTextEl = document.getElementById('status-text');
+        const visualizerBarsEl = document.getElementById('visualizer-bars');
+        const statusMessageEl = document.getElementById('status-message');
+
+        // Current state
+        let selectedCharacter = null;
+        let isRecording = false;
+        let visualizerAnimation = null;
+
+        // Initialize the app
+        function initApp() {
+            // Create character cards
+            createCharacterCards();
+
+            // Create visualizer bars
+            createVisualizerBars();
+
+            // Set up event listeners
+            micButtonEl.addEventListener('click', toggleRecording);
+        }
+
+        // Create character cards
+        function createCharacterCards() {
+            characters.forEach(character => {
+                const card = document.createElement('div');
+                card.className = 'character-card';
+                card.dataset.id = character.id;
+
+                card.innerHTML = `
+                    <div class="character-avatar">${character.emoji}</div>
+                    <div class="character-name">${character.name}</div>
+                    <div class="character-description">${character.description}</div>
+                `;
+
+                card.addEventListener('click', () => selectCharacter(character));
+
+                characterSelectionEl.appendChild(card);
+            });
+        }
+
+        // Create visualizer bars
+        function createVisualizerBars() {
+            // Clear existing bars
+            visualizerBarsEl.innerHTML = '';
+
+            // Create new bars
+            const barCount = window.innerWidth < 768 ? 16 : 25;
+
+            for (let i = 0; i < barCount; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'visualizer-bar';
+                visualizerBarsEl.appendChild(bar);
+            }
+        }
+
+        // Select a character
+        function selectCharacter(character) {
+            // Update selected character
+            selectedCharacter = character;
+
+            // Remove active class from all cards
+            document.querySelectorAll('.character-card').forEach(card => {
+                card.classList.remove('active');
+            });
+
+            // Add active class to selected card
+            const selectedCard = document.querySelector(.character-card[data-id="${character.id}"]);
+            if (selectedCard) {
+                selectedCard.classList.add('active');
+            }
+
+            // Update selected character display
+            selectedCharacterEl.innerHTML = `
+                <div class="selected-avatar">${character.emoji}</div>
+                <div class="selected-name">${character.name}</div>
+            `;
+
+            // Show interaction area
+            interactionAreaEl.classList.add('active');
+
+            // Show status message
+            showStatusMessage(${character.name} selected, 'success');
+        }
+
+        // Toggle recording state
+        function toggleRecording() {
+            if (!selectedCharacter) return;
+
+            isRecording = !isRecording;
+
+            if (isRecording) {
+                // Start recording
+                micButtonEl.classList.add('recording');
+                statusTextEl.textContent = 'Listening...';
+                animateVisualizer();
+
+                // Simulate recording for demo (in real app, would use Web Speech API)
+                // Automatically stop after random time between 3-7 seconds
+                setTimeout(() => {
+                    if (isRecording) {
+                        toggleRecording();
+                    }
+                }, Math.random() * 4000 + 3000);
+            } else {
+                // Stop recording
+                micButtonEl.classList.remove('recording');
+                statusTextEl.textContent = 'Processing...';
+
+                // Stop visualizer animation
+                if (visualizerAnimation) {
+                    cancelAnimationFrame(visualizerAnimation);
+                    visualizerAnimation = null;
+                }
+
+                // Reset visualizer bars with a small delay
+                setTimeout(() => {
+                    document.querySelectorAll('.visualizer-bar').forEach(bar => {
+                        bar.style.height = '5px';
+                    });
+                }, 300);
+
+                // Simulate processing for demo
+                setTimeout(() => {
+                    statusTextEl.textContent = 'Click the microphone to start speaking';
+                    showStatusMessage(${selectedCharacter.name} heard you!, 'success');
+                }, 1500);
+            }
+        }
+
+        // Animate visualizer
+        function animateVisualizer() {
+            if (!isRecording) return;
+
+            const bars = document.querySelectorAll('.visualizer-bar');
+
+            // Set random heights for bars
+            bars.forEach(bar => {
+                // Create a more natural looking pattern with some bars lower
+                // Middle bars taller on average than outer bars
+                const position = Array.from(bars).indexOf(bar);
+                const center = bars.length / 2;
+                const distanceFromCenter = Math.abs(position - center) / center;
+
+                // Create height based on position and random factor
+                const heightFactor = (1 - distanceFromCenter * 0.5) * (0.5 + Math.random() * 0.5);
+                const height = Math.floor(heightFactor * 100) + 5;
+
+                bar.style.height = ${height}px;
+            });
+
+            // Continue animation
+            visualizerAnimation = requestAnimationFrame(animateVisualizer);
+        }
+
+        // Show status message
+        function showStatusMessage(message, type = 'default') {
+            statusMessageEl.textContent = message;
+            statusMessageEl.className = 'status-message';
+
+            if (type) {
+                statusMessageEl.classList.add(type);
+            }
+
+            statusMessageEl.classList.add('active');
+
+            // Hide after 3 seconds
+            setTimeout(() => {
+                statusMessageEl.classList.remove('active');
+            }, 3000);
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            createVisualizerBars();
+        });
+
+        // Initialize app on load
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>

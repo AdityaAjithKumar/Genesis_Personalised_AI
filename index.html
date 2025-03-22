@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistant with Voice</title>
+    <style>
+        :root {
+            --primary-color: #4285f4;
+            --secondary-color: #34a853;
+            --accent-color: #ea4335;
+            --background-color: #f8f9fa;
+            --card-color: #ffffff;
+            --text-color: #202124;
+            --light-text: #5f6368;
+            --border-color: #dadce0;
+        }
+
+        body {
+            font-family: 'Roboto', 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: black;
+            line-height: 1.6;
+        }
+
+        .app-container {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            font-weight: 400;
+        }
+
+        .header p {
+            color: var(--light-text);
+        }
+
+        .main-panel {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .chat-panel {
+            flex: 2;
+            background-color: var(--card-color);
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .settings-panel {
+            flex: 1;
+            background-color: var(--card-color);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        .conversation {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            max-height: 500px;
+        }
+
+        .input-area {
+            padding: 15px 20px;
+            border-top: 1px solid var(--border-color);
+            background-color: var(--card-color);
+            border-radius: 0 0 12px 12px;
+        }
+
+        .input-container {
+            display: flex;
+            position: relative;
+        }
+
+        .message-input {
+            flex: 1;
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 12px 50px 12px 15px;
+            font-size: 16px;
+            resize: none;
+            outline: none;
+            transition: border-color 0.3s ease;
+            height: 24px;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        .message-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.1);
+        }
+
+        .voice-btn {
+            position: absolute;
+            right: 55px;
+            bottom: 8px;
+            background: none;
+            border: none;
+            color: var(--light-text);
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
+            border-radius: 50%;
+            transition: background-color 0.2s ease;
+        }
+
+        .voice-btn:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .voice-btn.recording {
+            color: var(--accent-color);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .send-btn {
+            position: absolute;
+            right: 10px;
+            bottom: 8px;
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
+            border-radius: 50%;
+            transition: background-color 0.2s ease;
+        }
+
+        .send-btn:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .message {
+            margin-bottom: 15px;
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            position: relative;
+            line-height: 1.5;
+        }
+
+        .message p {
+            margin: 0;
+            word-break: break-word;
+        }
+
+        .user {
+            background-color: #e3f2fd;
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+
+        .ai {
+            background-color: #f1f3f4;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message-time {
+            font-size: 10px;
+            color: var(--light-text);
+            position: absolute;
+            bottom: 2px;
+            right: 8px;
+            opacity: 0.7;
+        }
+
+        .panel-header {
+            color: var(--primary-color);
+            margin-top: 0;
+            font-weight: 500;
+            font-size: 18px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 14px;
+            color: var(--light-text);
+        }
+
+        .control-group input,
+        .control-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            background-color: var(--card-color);
+            color: var(--text-color);
+        }
+
+        .control-group input:focus,
+        .control-group select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.1);
+            outline: none;
+        }
+
+        .control-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #3367d6;
+        }
+
+        .btn-secondary {
+            background-color: #f1f3f4;
+            color: var(--text-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: #e8eaed;
+        }
+
+        .error-message {
+            color: var(--accent-color);
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .visualizer-container {
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 10px;
+            visibility: hidden;
+        }
+
+        .visualizer-container.active {
+            visibility: visible;
+        }
+
+        .visualizer-bar {
+            width: 3px;
+            height: 5px;
+            background-color: var(--primary-color);
+            margin: 0 2px;
+            border-radius: 1px;
+            transition: height 0.05s ease;
+        }
+
+        .typing-indicator {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 18px;
+            background-color: #f1f3f4;
+            margin-bottom: 15px;
+            visibility: hidden;
+        }
+
+        .typing-indicator.active {
+            visibility: visible;
+        }
+
+        .typing-indicator span {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: #70757a;
+            margin: 0 2px;
+            opacity: 0.6;
+            animation: typingAnimation 1.5s infinite ease-in-out;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typingAnimation {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+
+        @media (max-width: 768px) {
+            .main-panel {
+                flex-direction: column;
+            }
+
+            .message {
+                max-width: 90%;
+            }
+        }
+
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --background-color: #1e1e1e;
+                --card-color: #2d2d2d;
+                --text-color: #e8eaed;
+                --light-text: #9aa0a6;
+                --border-color: #5f6368;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <h1>AI Assistant with Voice</h1>
+            <p>Powered by Gemini AI and Sarvam AI</p>
+        </div>
+        
+        <div class="main-panel">
+            <div class="chat-panel">
+                <div class="conversation" id="conversation">
+                    <div class="message ai">
+                        <p>Hello! I'm your AI assistant. How can I help you today?</p>
+                        <span class="message-time">Just now</span>
+                    </div>
+                    <div class="typing-indicator" id="typing-indicator">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+                
+                <div class="input-area">
+                    <div class="visualizer-container" id="visualizer-container">
+                        <!-- Bars will be created dynamically -->
+                    </div>
+                    <div class="input-container">
+                        <textarea id="message-input" class="message-input" placeholder="Type your message or click the mic to speak..."></textarea>
+                        <button id="voice-btn" class="voice-btn" title="Start voice input">
+                            <span class="material-icons">mic</span>
+                        </button>
+                        <button id="send-btn" class="send-btn" title="Send message">
+                            <span class="material-icons">send</span>
+                        </button>
+                    </div>
+                    <div id="error-message" class="error-message"></div>
+                </div>
+            </div>
+            
+            <div class="settings-panel">
+                <h3 class="panel-header">Settings</h3>
+                
+                <div class="control-group">
+                    <label for="gemini-api-key">Gemini API Key</label>
+                    <input type="password" id="gemini-api-key" placeholder="Enter your Gemini API key">
+                </div>
+                
+                <div class="control-group">
+                    <label for="sarvam-api-key">Sarvam AI API Key</label>
+                    <input type="password" id="sarvam-api-key" placeholder="Enter your Sarvam AI API key">
+                </div>
+                
+                <div class="control-group">
+                    <label for="language-code">Language</label>
+                    <select id="language-code">
+                        <option value="en-IN">English (en-IN)</option>
+                        <option value="hi-IN">Hindi (hi-IN)</option>
+                        <option value="bn-IN">Bengali (bn-IN)</option>
+                        <option value="gu-IN">Gujarati (gu-IN)</option>
+                        <option value="kn-IN">Kannada (kn-IN)</option>
+                        <option value="ml-IN">Malayalam (ml-IN)</option>
+                        <option value="mr-IN">Marathi (mr-IN)</option>
+                        <option value="or-IN">Odia (or-IN)</option>
+                        <option value="pa-IN">Punjabi (pa-IN)</option>
+                        <option value="ta-IN">Tamil (ta-IN)</option>
+                        <option value="te-IN">Telugu (te-IN)</option>
+                    </select>
+                </div>
+                
+                <div class="control-buttons">
+                    <button id="save-settings-btn" class="btn btn-primary">Save Settings</button>
+                    <button id="clear-chat-btn" class="btn btn-secondary">Clear Chat</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const messageInput = document.getElementById('message-input');
+        const voiceBtn = document.getElementById('voice-btn');
+        const sendBtn = document.getElementById('send-btn');
+        const conversation = document.getElementById('conversation');
+        const visualizerContainer = document.getElementById('visualizer-container');
+        const typingIndicator = document.getElementById('typing-indicator');
+        const errorMessage = document.getElementById('error-message');
+        const clearChatBtn = document.getElementById('clear-chat-btn');
+        const saveSettingsBtn = document.getElementById('save-settings-btn');
+        
+        // API keys inputs
+        const geminiApiKeyInput = document.getElementById('gemini-api-key');
+        const sarvamApiKeyInput = document.getElementById('sarvam-api-key');
+        const languageCodeSelect = document.getElementById('language-code');
+        
+        // Chat history
+        let chatHistory = [];
+        let chatInitialized = false;
+        
+        // Media recorder variables
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+        
+        // Audio context for visualizer
+        let audioContext;
+        let analyser;
+        let microphone;
+        let visualizerBars = [];
+        const NUM_BARS = 20;
+        
+        // Initialize visualizer bars
+        function initializeVisualizer() {
+            // Create bars dynamically
+            for (let i = 0; i < NUM_BARS; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'visualizer-bar';
+                visualizerContainer.appendChild(bar);
+                visualizerBars.push(bar);
+            }
+        }
+        
+        // Function to get formatted current time
+        function getCurrentTime() {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            return `${hours}:${minutes}`;
+        }
+        
+        // Setup event listeners
+        function setupEventListeners() {
+            // Voice button click
+            voiceBtn.addEventListener('click', toggleRecording);
+            
+            // Send button click
+            sendBtn.addEventListener('click', sendMessage);
+            
+            // Input keydown
+            messageInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+            
+            // Auto-resize textarea
+            messageInput.addEventListener('input', () => {
+                messageInput.style.height = 'auto';
+                messageInput.style.height = (messageInput.scrollHeight < 120) ? `${messageInput.scrollHeight}px` : '120px';
+            });
+            
+            // Clear chat button
+            clearChatBtn.addEventListener('click', clearChat);
+            
+            // Save settings button
+            saveSettingsBtn.addEventListener('click', saveSettings);
+            
+            // Load settings from localStorage
+            loadSettings();
+        }
+        
+        // Toggle recording state
+        async function toggleRecording() {
+            if (!isRecording) {
+                const sarvamApiKey = sarvamApiKeyInput.value.trim();
+                
+                if (!sarvamApiKey) {
+                    setError("Please enter your Sarvam AI API key");
+                    return;
+                }
+                
+                clearError();
+                startRecording();
+            } else {
+                stopRecording();
+            }
+        }
+        
+        // Start recording
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                // Set up media recorder
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+                
+                mediaRecorder.addEventListener('dataavailable', event => {
+                    audioChunks.push(event.data);
+                });
+                
+                mediaRecorder.addEventListener('stop', async () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    await processAudio(audioBlob);
+                    
+                    // Stop the microphone stream
+                    stream.getTracks().forEach(track => track.stop());
+                    
+                    // Stop visualizer
+                    if (audioContext) {
+                        if (microphone) {
+                            microphone.disconnect();
+                        }
+                        cancelAnimationFrame(visualizerAnimationFrame);
+                        visualizerContainer.classList.remove('active');
+                    }
+                });
+                
+                // Start recording
+                mediaRecorder.start();
+                isRecording = true;
+                voiceBtn.classList.add('recording');
+                voiceBtn.querySelector('.material-icons').textContent = 'mic_off';
+                
+                // Set up audio analyzer for visualizer
+                setupAudioAnalyzer(stream);
+                
+            } catch (error) {
+                console.error('Error accessing microphone:', error);
+                setError('Could not access the microphone. Please ensure you have granted permission.');
+            }
+        }
+        
+        // Stop recording
+        function stopRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                isRecording = false;
+                voiceBtn.classList.remove('recording');
+                voiceBtn.querySelector('.material-icons').textContent = 'mic';
+            }
+        }
+        
+        // Set up audio analyzer for visualizer
+        let visualizerAnimationFrame;
+        function setupAudioAnalyzer(stream) {
+            // Initialize audio context if not already done
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            
+            // Create analyzer
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 256;
+            
+            // Connect microphone to analyzer
+            microphone = audioContext.createMediaStreamSource(stream);
+            microphone.connect(analyser);
+            
+            // Show visualizer container
+            visualizerContainer.classList.add('active');
+            
+            // Start drawing
+            drawVisualizer();
+        }
+        
+        // Draw visualizer animation
+        function drawVisualizer() {
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            
+            function draw() {
+                visualizerAnimationFrame = requestAnimationFrame(draw);
+                
+                analyser.getByteFrequencyData(dataArray);
+                
+                const barWidth = visualizerContainer.clientWidth / NUM_BARS;
+                const step = Math.floor(bufferLength / NUM_BARS);
+                
+                for (let i = 0; i < NUM_BARS; i++) {
+                    const dataIndex = i * step;
+                    let value = dataArray[dataIndex] / 255;
+                    
+                    // Apply some smoothing
+                    const height = Math.max(3, value * 30);
+                    visualizerBars[i].style.height = `${height}px`;
+                }
+            }
+            
+            draw();
+        }
+        
+        // Process recorded audio
+        async function processAudio(audioBlob) {
+            const sarvamApiKey = sarvamApiKeyInput.value.trim();
+            const languageCode = languageCodeSelect.value;
+            
+            try {
+                // Create form data
+                const formData = new FormData();
+                formData.append('file', audioBlob, 'recording.wav');
+                formData.append('model', 'saarika:v2');
+                formData.append('language_code', languageCode);
+                
+                // Show processing indicator
+                setError('Processing speech...');
+                
+                // Send to Sarvam API for transcription
+                const response = await fetch('https://api.sarvam.ai/speech-to-text', {
+                    method: 'POST',
+                    headers: {
+                        'api-subscription-key': sarvamApiKey
+                    },
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Speech-to-text error: ${response.status} ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                clearError();
+                
+                if (data.transcript && data.transcript.trim()) {
+                    // Set the transcript as input
+                    messageInput.value = data.transcript;
+                    
+                    // Auto-resize the textarea
+                    messageInput.dispatchEvent(new Event('input'));
+                    
+                    // Automatically send message if it's not empty
+                    sendMessage();
+                } else {
+                    setError('No speech detected. Please try again.');
+                }
+                
+            } catch (error) {
+                console.error('Error processing audio:', error);
+                setError(`Failed to process speech: ${error.message}`);
+            }
+        }
+        
+        // Send message to Gemini AI
+        async function sendMessage() {
+            const userMessage = messageInput.value.trim();
+            const geminiApiKey = geminiApiKeyInput.value.trim();
+            const sarvamApiKey = sarvamApiKeyInput.value.trim();
+            
+            // Validate inputs
+            if (!userMessage) {
+                setError("Please enter a message");
+                return;
+            }
+            
+            if (!geminiApiKey) {
+                setError("Please enter your Gemini API key");
+                return;
+            }
+            
+            if (!sarvamApiKey) {
+                setError("Please enter your Sarvam AI API key");
+                return;
+            }
+            
+            // Clear input and error
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            clearError();
+            
+            // Add user message to conversation
+            addMessage(userMessage, 'user');
+            
+            // Show typing indicator
+            typingIndicator.classList.add('active');
+            
+            try {
+                // Call Gemini AI API
+                const response = await callGeminiAPI(userMessage, geminiApiKey);
+                
+                // Hide typing indicator
+                typingIndicator.classList.remove('active');
+                
+                // Add AI response to conversation
+                addMessage(response, 'ai');
+                
+                // Convert AI response to speech
+                await textToSpeech(response, sarvamApiKey);
+            } catch (error) {
+                // Hide typing indicator
+                typingIndicator.classList.remove('active');
+                setError(error.message || "An error occurred");
+            }
+        }
+        
+        // Call Gemini AI API
+        async function callGeminiAPI(message, apiKey) {
+            const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+            
+            try {
+                let requestBody;
+                
+                if (!chatInitialized) {
+                    // First message in the conversation
+                    requestBody = {
+                        contents: [
+                            {
+                                role: "user",
+                                parts: [{ text: message }]
+                            }
+                        ]
+                    };
+                    chatInitialized = true;
+                } else {
+                    // Construct history from chatHistory array
+                    const contents = [];
+                    
+                    chatHistory.forEach(item => {
+                        contents.push({
+                            role: item.role,
+                            parts: [{ text: item.text }]
+                        });
+                    });
+                    
+                    // Add current message
+                    contents.push({
+                        role: "user",
+                        parts: [{ text: message }]
+                    });
+                    
+                    requestBody = { contents };
+                }
+                
+                const response = await fetch(`${url}?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Gemini API Error: ${response.status} ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                // Update chat history
+                chatHistory.push({ role: "user", text: message });
+                
+                if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+                    const aiResponse = data.candidates[0].content.parts[0].text;
+                    chatHistory.push({ role: "model", text: aiResponse });
+                    return aiResponse;
+                } else {
+                    throw new Error("Invalid response from Gemini API");
+                }
+            } catch (error) {
+                console.error("Error calling Gemini API:", error);
+                throw error;
+            }
+        }
+        
+        // Convert text to speech using Sarvam AI
+        async function textToSpeech(text, apiKey) {
+            const url = "https://api.sarvam.ai/text-to-speech";
+            const languageCode = languageCodeSelect.value;
+            
+            const payload = {
+                inputs: [text],
+                target_language_code: languageCode,
+                model: "bulbul:v1"
+            };
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'api-subscription-key': apiKey,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Sarvam API Error: ${response.status} ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.audios && data.audios.length > 0) {
+                    const audioBase64 = data.audios[0];
+                    playAudio(audioBase64);
+                } else {
+                    throw new Error("No audio returned from Sarvam API");
+                }
+            } catch (error) {
+                console.error("Error in TTS:", error);
+                // We'll just log this error but not show it to the user
+                // since the text response is already displayed
+            }
+        }
+        
+        // Play audio from base64
+        function playAudio(base64Audio) {
+            const audio = new Audio(`data:audio/wav;base64,${base64Audio}`);
+            audio.play();
+        }
+        
+        // Add message to conversation
+        function addMessage(text, role) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            
+            const paragraph = document.createElement('p');
+            paragraph.textContent = text;
+            
+            const timeSpan = document.createElement('span');
+            timeSpan.className = 'message-time';
+            timeSpan.textContent = getCurrentTime();
+            
+            messageDiv.appendChild(paragraph);
+            messageDiv.appendChild(timeSpan);
+            
+            // Insert before typing indicator
+            conversation.insertBefore(messageDiv, typingIndicator);
+            
+            // Scroll to bottom
+            conversation.scrollTop = conversation.scrollHeight;
+        }
+        
+        // Clear chat
+        function clearChat() {
+            // Keep only the initial greeting message and typing indicator
+            conversation.innerHTML = `
+                <div class="message ai">
+                    <p>Hello! I'm your AI assistant. How can I help you today?</p>
+                    <span class="message-time">${getCurrentTime()}</span>
+                </div>
+                <div class="typing-indicator" id="typing-indicator">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            `;
+            
+            // Reset chat history
+            chatHistory = [];
+            chatInitialized = false;
+            clearError();
+            
+            // Reset typing indicator reference
+            typingIndicator = document.getElementById('typing-indicator');
+        }
+        
+        // Save settings to localStorage
+        function saveSettings() {
+            const settings = {
+                geminiApiKey: geminiApiKeyInput.value,
+                sarvamApiKey: sarvamApiKeyInput.value,
+                languageCode: languageCodeSelect.value
+            };
+            
+            localStorage.setItem('aiAssistantSettings', JSON.stringify(settings));
+            setError('Settings saved!');
+            
+            // Clear message after 3 seconds
+            setTimeout(clearError, 3000);
+        }
+        
+        // Load settings from localStorage
+        function loadSettings() {
+            const savedSettings = localStorage.getItem('aiAssistantSettings');
+            
+            if (savedSettings) {
+                const settings = JSON.parse(savedSettings);
+                
+                geminiApiKeyInput.value = settings.geminiApiKey || '';
+                sarvamApiKeyInput.value = settings.sarvamApiKey || '';
+                languageCodeSelect.value = settings.languageCode || 'en-IN';
+            }
+        }
+        
+        // Error handling functions
+        function setError(message) {
+            errorMessage.textContent = message;
+        }
+        
+        function clearError() {
+            errorMessage.textContent = '';
+        }
+        
+        // Initialize the application
+        function initialize() {
+            initializeVisualizer();
+            setupEventListeners();
+        }
+        
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initialize);
+    </script>
+</body>
+</html>
